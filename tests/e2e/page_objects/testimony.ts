@@ -2,14 +2,20 @@ import { expect, type Locator, type Page } from "@playwright/test"
 
 export class TestimonyPage {
   readonly page: Page
-  readonly resultsCountText: Locator
+  readonly allTab: Locator
+  readonly individualsTab: Locator
+  readonly organizationsTab: Locator
   readonly queryFilterItem: Locator
+  readonly resultsCountText: Locator
   readonly searchBar: Locator
 
   constructor(page: Page) {
     this.page = page
-    this.resultsCountText = page.getByText("Results").first()
+    this.allTab = page.getByRole("tab", { name: "All" })
+    this.individualsTab = page.getByRole("tab", { name: "Individual" })
+    this.organizationsTab = page.getByRole("tab", { name: "Organizations" })
     this.queryFilterItem = page.getByText("query:").locator("..")
+    this.resultsCountText = page.getByText("Results").first()
     this.searchBar = page.getByPlaceholder("Search for Testimony")
   }
 
@@ -23,5 +29,10 @@ export class TestimonyPage {
 
   async filterByAuthorRoleTab(role: string) {
     await this.page.getByRole("tab", { name: role }).click()
+  }
+
+  async sort(option: string) {
+    await this.page.getByText("Sort by New -> Old").click()
+    await this.page.getByRole("option", { name: option }).click()
   }
 }

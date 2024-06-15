@@ -2,12 +2,8 @@ import { test, expect } from "@playwright/test"
 import { TestimonyPage } from "./page_objects/testimony"
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("http://localhost:3000")
-  await page
-    .getByRole("button", {
-      name: "Browse All Testimony"
-    })
-    .click()
+  const testimonyPage = new TestimonyPage(page)
+  await testimonyPage.goto()
 })
 
 test.describe("Browse Testimonies Page", () => {
@@ -43,40 +39,87 @@ test.describe("Testimony Search", () => {
 
 test.describe("Testimony Filtering", () => {
   test("should filter for testimonies by individuals", async ({ page }) => {
-    const individualsTab = page.getByRole("tab", { name: "Individuals" })
-    await individualsTab.click()
+    const testimonyPage = new TestimonyPage(page)
+    await testimonyPage.filterByAuthorRoleTab("Individuals")
+
+    const { individualsTab } = testimonyPage
     await expect(page).toHaveURL(/.*authorRole%5D%5B0%5D=user/)
     await expect(individualsTab).toHaveClass(/nav-link/)
     await expect(individualsTab).toHaveClass(/active/)
   })
 
   test("should filter for testimonies by organizations", async ({ page }) => {
-    const orgsTab = page.getByRole("tab", { name: "Organizations" })
-    await orgsTab.click()
+    const testimonyPage = new TestimonyPage(page)
+    await testimonyPage.filterByAuthorRoleTab("Organizations")
+
+    const { organizationsTab } = testimonyPage
     await expect(page).toHaveURL(/.*authorRole%5D%5B0%5D=organization/)
-    await expect(orgsTab).toHaveClass(/nav-link/)
-    await expect(orgsTab).toHaveClass(/active/)
+    await expect(organizationsTab).toHaveClass(/nav-link/)
+    await expect(organizationsTab).toHaveClass(/active/)
   })
 
   // "All" is the page default, this test switches tabs then goes back to "All"
   // SKIP: This test will fail, switching from other tabs back to "All" currently has a bug
   test.skip("should filter for testimonies by all", async ({ page }) => {
-    const individualsTab = page.getByRole("tab", { name: "Individual" })
-    await individualsTab.click()
+    const testimonyPage = new TestimonyPage(page)
+    await testimonyPage.filterByAuthorRoleTab("Individuals")
+
+    const { individualsTab, allTab } = testimonyPage
     await expect(page).toHaveURL(/.*authorRole%5D%5B0%5D=user/)
     await expect(individualsTab).toHaveClass(/nav-link/)
     await expect(individualsTab).toHaveClass(/active/)
 
-    const allTab = page.getByRole("tab", { name: "Individual" })
-    await allTab.click()
+    await testimonyPage.filterByAuthorRoleTab("All")
     await expect(page).toHaveURL(/.*authorRole%5D%5B0%5D=all/)
     await expect(allTab).toHaveClass(/nav-link/)
     await expect(allTab).toHaveClass(/active/)
   })
 })
 
-// test.describe("Testimony Sorting", () => {
-//   test("should sort by new -> old", async ({ page }) => {
-//     await page.getByRole("option", { name: "Sort by New -> Old" }).click()
-//   })
-// })
+test.describe("Testimony Sorting", () => {
+  test("should sort by new -> old", async ({ page }) => {
+    const testimonyPage = new TestimonyPage(page)
+    await testimonyPage.sort("Sort by New -> Old")
+
+    const resultsDatePosted = page.getByText(/Posted/)
+
+    const count = await resultsDatePosted.count()
+    for (let i = 0; i < count - 1; i++) {
+      const current = await resultsDatePosted.nth(i).textContent()
+      const next = await resultsDatePosted.nth(i + 1).textContent()
+
+      const currDateString = current?.slice(7) // Removes "Posted " before date
+      const nextDateString = next?.slice(7)
+
+      if (currDateString && nextDateString) {
+        const currPostedDate = Date.parse(currDateString)
+        const nextPostedDate = Date.parse(nextDateString)
+
+        expect(currPostedDate).toBeGreaterThanOrEqual(nextPostedDate)
+      }
+    }
+  })
+
+  test("should sort by old -> new", async ({ page }) => {
+    const testimonyPage = new TestimonyPage(page)
+    await testimonyPage.sort("Sort by Old -> New")
+
+    const resultsDatePosted = page.getByText(/Posted/)
+
+    const count = await resultsDatePosted.count()
+    for (let i = 0; i < count - 1; i++) {
+      const current = await resultsDatePosted.nth(i).textContent()
+      const next = await resultsDatePosted.nth(i + 1).textContent()
+
+      const currDateString = current?.slice(7) // Removes "Posted " before date
+      const nextDateString = next?.slice(7)
+
+      if (currDateString && nextDateString) {
+        const currPostedDate = Date.parse(currDateString)
+        const nextPostedDate = Date.parse(nextDateString)
+
+        expect(currPostedDate).toBeLessThanOrEqual(nextPostedDate)
+      }
+    }
+  })
+})
