@@ -38,7 +38,9 @@ test.describe("Testimony Search", () => {
 })
 
 test.describe("Testimony Filtering", () => {
-  test("should filter for testimonies by individuals", async ({ page }) => {
+  test("should filter for testimonies by author role, individuals", async ({
+    page
+  }) => {
     const testimonyPage = new TestimonyPage(page)
     await testimonyPage.filterByAuthorRoleTab("Individuals")
 
@@ -48,7 +50,9 @@ test.describe("Testimony Filtering", () => {
     await expect(individualsTab).toHaveClass(/active/)
   })
 
-  test("should filter for testimonies by organizations", async ({ page }) => {
+  test("should filter for testimonies by author role, organizations", async ({
+    page
+  }) => {
     const testimonyPage = new TestimonyPage(page)
     await testimonyPage.filterByAuthorRoleTab("Organizations")
 
@@ -58,8 +62,9 @@ test.describe("Testimony Filtering", () => {
     await expect(organizationsTab).toHaveClass(/active/)
   })
 
-  // "All" is the page default, this test switches tabs then goes back to "All"
-  // SKIP: This test will fail, switching from other tabs back to "All" currently has a bug
+  /* "All" is the page default, this test switches tabs then goes back to "All"
+    SKIP: This test will fail, switching from other tabs back to "All" currently has a bug
+    https://github.com/codeforboston/maple/issues/1578 */
   test.skip("should filter for testimonies by all", async ({ page }) => {
     const testimonyPage = new TestimonyPage(page)
     await testimonyPage.filterByAuthorRoleTab("Individuals")
@@ -74,6 +79,14 @@ test.describe("Testimony Filtering", () => {
     await expect(allTab).toHaveClass(/nav-link/)
     await expect(allTab).toHaveClass(/active/)
   })
+
+  test("should filter by court", async ({ page }) => {
+    const testimonyPage = new TestimonyPage(page)
+    await page.getByRole("checkbox", { name: "192" }).check()
+    const appliedCourtFilters = page.getByText("court:").locator("..")
+    await expect(appliedCourtFilters).toContainText("192")
+    await expect(page).toHaveURL(/.*court%5D%5B1%5D=192/)
+  })
 })
 
 test.describe("Testimony Sorting", () => {
@@ -82,21 +95,14 @@ test.describe("Testimony Sorting", () => {
     await testimonyPage.sort("Sort by New -> Old")
 
     const resultsDatePosted = page.getByText(/Posted/)
+    const dates = await testimonyPage.getPostedDatesFromLocatorResults(
+      resultsDatePosted
+    )
+    for (let i = 0; i < dates.length - 1; i++) {
+      const currDate = dates[i]
+      const nextDate = dates[i + 1]
 
-    const count = await resultsDatePosted.count()
-    for (let i = 0; i < count - 1; i++) {
-      const current = await resultsDatePosted.nth(i).textContent()
-      const next = await resultsDatePosted.nth(i + 1).textContent()
-
-      const currDateString = current?.slice(7) // Removes "Posted " before date
-      const nextDateString = next?.slice(7)
-
-      if (currDateString && nextDateString) {
-        const currPostedDate = Date.parse(currDateString)
-        const nextPostedDate = Date.parse(nextDateString)
-
-        expect(currPostedDate).toBeGreaterThanOrEqual(nextPostedDate)
-      }
+      expect(currDate).toBeGreaterThanOrEqual(nextDate)
     }
   })
 
@@ -105,21 +111,14 @@ test.describe("Testimony Sorting", () => {
     await testimonyPage.sort("Sort by Old -> New")
 
     const resultsDatePosted = page.getByText(/Posted/)
+    const dates = await testimonyPage.getPostedDatesFromLocatorResults(
+      resultsDatePosted
+    )
+    for (let i = 0; i < dates.length - 1; i++) {
+      const currDate = dates[i]
+      const nextDate = dates[i + 1]
 
-    const count = await resultsDatePosted.count()
-    for (let i = 0; i < count - 1; i++) {
-      const current = await resultsDatePosted.nth(i).textContent()
-      const next = await resultsDatePosted.nth(i + 1).textContent()
-
-      const currDateString = current?.slice(7) // Removes "Posted " before date
-      const nextDateString = next?.slice(7)
-
-      if (currDateString && nextDateString) {
-        const currPostedDate = Date.parse(currDateString)
-        const nextPostedDate = Date.parse(nextDateString)
-
-        expect(currPostedDate).toBeLessThanOrEqual(nextPostedDate)
-      }
+      expect(currDate).toBeLessThanOrEqual(nextDate)
     }
   })
 })
