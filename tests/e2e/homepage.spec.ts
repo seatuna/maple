@@ -10,4 +10,11 @@ test.describe("Maple Homepage", () => {
     await expect(logo).toBeVisible()
     await expect(page.getByText("Let your voice be heard!")).toBeVisible()
   })
+
+  test("should be able to navigate to the Browse Testimony page", async ({
+    page
+  }) => {
+    await page.getByRole("button", { name: "Browse All Testimony" }).click()
+    await expect(page).toHaveURL(/\/testimony/)
+  })
 })

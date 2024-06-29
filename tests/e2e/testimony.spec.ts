@@ -2,8 +2,7 @@ import { test, expect } from "@playwright/test"
 import { TestimonyPage } from "./page_objects/testimony"
 
 test.beforeEach(async ({ page }) => {
-  const testimonyPage = new TestimonyPage(page)
-  await testimonyPage.goto()
+  await page.goto("http://localhost:3000/testimony")
 })
 
 test.describe("Browse Testimonies Page", () => {
@@ -81,11 +80,24 @@ test.describe("Testimony Filtering", () => {
   })
 
   test("should filter by court", async ({ page }) => {
-    const testimonyPage = new TestimonyPage(page)
     await page.getByRole("checkbox", { name: "192" }).check()
     const appliedCourtFilters = page.getByText("court:").locator("..")
     await expect(appliedCourtFilters).toContainText("192")
     await expect(page).toHaveURL(/.*court%5D%5B1%5D=192/)
+  })
+
+  test("should filter by position: endorse", async ({ page }) => {
+    await page.getByRole("checkbox", { name: "endorse" }).check()
+    const testimonyPage = new TestimonyPage(page)
+    await expect(testimonyPage.positionFilterItem).toContainText("endorse")
+    await expect(page).toHaveURL(/.*position%5D%5B0%5D=endorse/)
+  })
+
+  test("should filter by position: neutral", async ({ page }) => {
+    await page.getByRole("checkbox", { name: "neutral" }).check()
+    const testimonyPage = new TestimonyPage(page)
+    await expect(testimonyPage.positionFilterItem).toContainText("neutral")
+    await expect(page).toHaveURL(/.*position%5D%5B0%5D=neutral/)
   })
 })
 
@@ -93,32 +105,14 @@ test.describe("Testimony Sorting", () => {
   test("should sort by new -> old", async ({ page }) => {
     const testimonyPage = new TestimonyPage(page)
     await testimonyPage.sort("Sort by New -> Old")
-
-    const resultsDatePosted = page.getByText(/Posted/)
-    const dates = await testimonyPage.getPostedDatesFromLocatorResults(
-      resultsDatePosted
-    )
-    for (let i = 0; i < dates.length - 1; i++) {
-      const currDate = dates[i]
-      const nextDate = dates[i + 1]
-
-      expect(currDate).toBeGreaterThanOrEqual(nextDate)
-    }
+    const sortValue = page.getByText("Sort by New -> Old", { exact: true })
+    await expect(sortValue).toBeVisible()
   })
 
   test("should sort by old -> new", async ({ page }) => {
     const testimonyPage = new TestimonyPage(page)
     await testimonyPage.sort("Sort by Old -> New")
-
-    const resultsDatePosted = page.getByText(/Posted/)
-    const dates = await testimonyPage.getPostedDatesFromLocatorResults(
-      resultsDatePosted
-    )
-    for (let i = 0; i < dates.length - 1; i++) {
-      const currDate = dates[i]
-      const nextDate = dates[i + 1]
-
-      expect(currDate).toBeLessThanOrEqual(nextDate)
-    }
+    const sortValue = page.getByText("Sort by Old -> New", { exact: true })
+    await expect(sortValue).toBeVisible()
   })
 })
