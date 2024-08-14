@@ -1,7 +1,7 @@
 import {
-  RefinementListUiComponent,
+  RefinementList,
   useInstantSearch
-} from "@alexjball/react-instantsearch-hooks-web"
+} from "react-instantsearch"
 import { faFilter } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useCallback, useEffect, useState } from "react"
@@ -38,10 +38,11 @@ export const useRefinements = ({
     if (inline) setShow(false)
   }, [inline])
 
+  console.log(refinementProps);
   const refinements = (
     <>
       {refinementProps.map((p, i) => (
-        <RefinementListUiComponent className="mb-4" key={i} {...(p as any)} />
+        <RefinementList className="mb-4" key={i} {...(p as any)} />
       ))}
     </>
   )

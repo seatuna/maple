@@ -2,7 +2,7 @@ import {
   useSortBy,
   useConfigure,
   UseConfigureProps
-} from "@alexjball/react-instantsearch-hooks-web"
+} from "react-instantsearch"
 import { SortByItem } from "instantsearch.js/es/connectors/sort-by/connectSortBy"
 import Select from "react-select"
 import styled from "styled-components"
